@@ -60,18 +60,7 @@ export function numberToWords(num: number): string {
     "EIGHTEEN",
     "NINETEEN",
   ];
-  const b = [
-    "",
-    "",
-    "TWENTY",
-    "THIRTY",
-    "FORTY",
-    "FIFTY",
-    "SIXTY",
-    "SEVENTY",
-    "EIGHTY",
-    "NINETY",
-  ];
+  const b = ["", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"];
 
   const inWords = (n: number): string => {
     let str = "";
@@ -123,16 +112,7 @@ export function SvgBarcode({ value }: { value: string }) {
         const x = currentX;
         currentX += width + 1.2;
         if (currentX > 158) return null;
-        return (
-          <rect
-            key={idx}
-            x={x}
-            y="0"
-            width={width}
-            height="36"
-            fill="#0f172a"
-          />
-        );
+        return <rect key={idx} x={x} y="0" width={width} height="36" fill="#0f172a" />;
       })}
     </svg>
   );
@@ -198,7 +178,7 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
               "No warranty if physical damage, display broken, bending, scratch, dent, burn, electric shock, liquid damage or root is found.",
               "Before leaving shop, kindly check product properly. Outside repair, scratch or waterproof issues will not be accepted.",
               "USA & CANADA region smartphones can experience blacklist or update delay. Warranty covers hardware only. No replacement for blacklisted issues.",
-            ]
+            ],
       );
       setInvoiceFooterNote(profile.invoiceFooterNote || "");
       setShowWatermark(profile.showWatermark !== false);
@@ -277,25 +257,37 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
   const previewItem = isGadgetMode
     ? {
         productName: realGadgetSale?.productName || sampleGadgetStock?.productName || "Airpods 2",
-        description: sampleGadgetStock?.color ? `Color: ${sampleGadgetStock.color}` : "Original Smart Accessory & Gadget",
-        code: realGadgetSale?.invoiceNumber || (sampleGadgetStock ? `GAD-${sampleGadgetStock.id.slice(-6).toUpperCase()}` : "GAD-001"),
-        price: realGadgetSale ? realGadgetSale.sellingPrice : (sampleGadgetStock?.minSellingPrice || 1500),
+        description: sampleGadgetStock?.color
+          ? `Color: ${sampleGadgetStock.color}`
+          : "Original Smart Accessory & Gadget",
+        code:
+          realGadgetSale?.invoiceNumber ||
+          (sampleGadgetStock ? `GAD-${sampleGadgetStock.id.slice(-6).toUpperCase()}` : "GAD-001"),
+        price: realGadgetSale
+          ? realGadgetSale.sellingPrice
+          : sampleGadgetStock?.minSellingPrice || 1500,
         qty: realGadgetSale ? realGadgetSale.quantity : 1,
         discount: 0,
-        total: realGadgetSale ? realGadgetSale.totalPrice : (sampleGadgetStock?.minSellingPrice || 1500),
+        total: realGadgetSale
+          ? realGadgetSale.totalPrice
+          : sampleGadgetStock?.minSellingPrice || 1500,
         customerName: realGadgetSale?.customerName || "WALK-IN CUSTOMER",
         customerPhone: realGadgetSale?.customerPhone || "+8801700000000",
         customerAddress: "LOCAL CUSTOMER",
         paymentMethod: realGadgetSale?.paymentMethod || "Cash",
-        warranty: realGadgetSale?.warrantyDays ? `${realGadgetSale.warrantyDays} Days Warranty` : "Standard Store Warranty",
+        warranty: realGadgetSale?.warrantyDays
+          ? `${realGadgetSale.warrantyDays} Days Warranty`
+          : "Standard Store Warranty",
       }
     : {
         productName: realPhoneSale ? `${realPhoneSale.brand} ${realPhoneSale.model}` : "iPhone 14",
         description: realPhoneSale
-          ? [realPhoneSale.variant, realPhoneSale.color, realPhoneSale.ram, realPhoneSale.storage].filter(Boolean).join(" | ") || "Smart device"
+          ? [realPhoneSale.variant, realPhoneSale.color, realPhoneSale.ram, realPhoneSale.storage]
+              .filter(Boolean)
+              .join(" | ") || "Smart device"
           : "128 GB Used - LL/A",
         code: realPhoneSale?.imei ? `IMEI# ${realPhoneSale.imei}` : "IMEI# 358264146567599",
-        price: realPhoneSale ? (realPhoneSale.finalPrice + (realPhoneSale.discount || 0)) : 47000,
+        price: realPhoneSale ? realPhoneSale.finalPrice + (realPhoneSale.discount || 0) : 47000,
         qty: realPhoneSale?.quantity || 1,
         discount: realPhoneSale?.discount || 0,
         total: realPhoneSale ? realPhoneSale.finalPrice : 47000,
@@ -309,9 +301,7 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
       };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/65 z-50 flex items-center justify-center p-2.5 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
-    >
+    <div className="fixed inset-0 bg-black/65 z-50 flex items-center justify-center p-2.5 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="bg-card rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl border transition-all animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col m-auto"
         onClick={(e) => e.stopPropagation()}
@@ -414,7 +404,7 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                       <Check className="size-3.5" /> Logo & Shop Name Synced from Setup Profile
                     </div>
                     <div className="text-lg font-black text-foreground truncate">
-                      {profile.shopName || "Phone Bazar"}
+                      {profile.shopName || "Gadgets"}
                     </div>
                     {profile.shopTagline && (
                       <div className="text-xs text-muted-foreground font-medium truncate">
@@ -425,13 +415,13 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                 </div>
 
                 <div className="text-[11px] text-muted-foreground bg-background/60 p-2.5 rounded-xl border border-border/50 max-w-xs leading-snug">
-                  Logo & shop name are automatically loaded into invoices from <strong>"Setup Profile & Image"</strong>.
+                  Logo & shop name are automatically loaded into invoices from{" "}
+                  <strong>"Setup Profile & Image"</strong>.
                 </div>
               </div>
 
               {/* Shop Invoice Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                 <div className="sm:col-span-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1 block flex items-center gap-1.5">
                     <MapPin className="size-3 text-primary" /> Store Address
@@ -503,7 +493,8 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                     className="w-full px-3 py-2 rounded-xl border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-bold"
                   />
                   <span className="text-[11px] text-muted-foreground mt-1 block">
-                    Displays in the center of the invoice (e.g. SALES INVOICE, CASH MEMO, RETAIL INVOICE)
+                    Displays in the center of the invoice (e.g. SALES INVOICE, CASH MEMO, RETAIL
+                    INVOICE)
                   </span>
                 </div>
 
@@ -553,7 +544,8 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
 
                   <label className="flex items-center justify-between p-3 rounded-xl border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors sm:col-span-2">
                     <span className="text-xs font-semibold text-foreground flex items-center gap-2">
-                      <Check className="size-4 text-primary" /> Signature Lines (Customer & Authorized)
+                      <Check className="size-4 text-primary" /> Signature Lines (Customer &
+                      Authorized)
                     </span>
                     <input
                       type="checkbox"
@@ -658,7 +650,12 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                     }`}
                   >
                     <Package className="size-3.5" />
-                    Sell Gadget Info {realGadgetSale ? `(${realGadgetSale.productName})` : sampleGadgetStock ? `(${sampleGadgetStock.productName})` : "(Airpods 2)"}
+                    Sell Gadget Info{" "}
+                    {realGadgetSale
+                      ? `(${realGadgetSale.productName})`
+                      : sampleGadgetStock
+                        ? `(${sampleGadgetStock.productName})`
+                        : "(Airpods 2)"}
                   </button>
 
                   <button
@@ -680,7 +677,9 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[11px] text-cyan-900 dark:text-cyan-200">
                 <Info className="size-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
                 <span>
-                  When you sell an item in <strong>"Sell Gadget"</strong> or <strong>"Sell Phone"</strong>, the customer invoice is automatically generated with actual product details and pricing.
+                  When you sell an item in <strong>"Sell Gadget"</strong> or{" "}
+                  <strong>"Sell Phone"</strong>, the customer invoice is automatically generated
+                  with actual product details and pricing.
                 </span>
               </div>
 
@@ -705,7 +704,7 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                     )}
                     <div className="min-w-0">
                       <h2 className="text-base font-black uppercase tracking-tight text-slate-900">
-                        {profile.shopName || "Phone Bazar"}
+                        {profile.shopName || "Gadgets"}
                       </h2>
                       {profile.shopTagline && (
                         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
@@ -738,10 +737,22 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                       </div>
                     )}
                     <div className="text-[10px] space-y-0.5 text-slate-600 font-mono">
-                      <div>Invoice N°: <span className="font-bold text-slate-900">{previewItem.code}</span></div>
-                      <div>InvSL: <span className="font-bold">#614</span></div>
+                      <div>
+                        Invoice N°:{" "}
+                        <span className="font-bold text-slate-900">{previewItem.code}</span>
+                      </div>
+                      <div>
+                        InvSL: <span className="font-bold">#614</span>
+                      </div>
                       <div>User: Admin</div>
-                      <div>Date: {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</div>
+                      <div>
+                        Date:{" "}
+                        {new Date().toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -756,15 +767,30 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                 {/* Customer Section */}
                 <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-200 text-[11px]">
                   <div>
-                    <span className="font-bold uppercase text-slate-500 text-[10px]">Customer:</span>
-                    <div className="font-extrabold text-slate-900 text-xs mt-0.5 uppercase">{previewItem.customerName}</div>
+                    <span className="font-bold uppercase text-slate-500 text-[10px]">
+                      Customer:
+                    </span>
+                    <div className="font-extrabold text-slate-900 text-xs mt-0.5 uppercase">
+                      {previewItem.customerName}
+                    </div>
                     <div className="text-slate-600">Contact: {previewItem.customerPhone}</div>
-                    <div className="text-slate-600">Client ID: CU/SEL/{isGadgetMode ? "GAD" : "PHN"}</div>
+                    <div className="text-slate-600">
+                      Client ID: CU/SEL/{isGadgetMode ? "GAD" : "PHN"}
+                    </div>
                   </div>
                   <div>
-                    <span className="font-bold uppercase text-slate-500 text-[10px]">Address / Payment:</span>
-                    <div className="text-slate-800 font-medium mt-0.5 uppercase">{previewItem.customerAddress}</div>
-                    <div className="text-slate-600 mt-0.5">Payment: <span className="font-semibold text-slate-800">{previewItem.paymentMethod}</span></div>
+                    <span className="font-bold uppercase text-slate-500 text-[10px]">
+                      Address / Payment:
+                    </span>
+                    <div className="text-slate-800 font-medium mt-0.5 uppercase">
+                      {previewItem.customerAddress}
+                    </div>
+                    <div className="text-slate-600 mt-0.5">
+                      Payment:{" "}
+                      <span className="font-semibold text-slate-800">
+                        {previewItem.paymentMethod}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -801,21 +827,32 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                           )}
                         </td>
                         <td className="py-2 text-right font-mono text-slate-700">
-                          {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.price)}
+                          {new Intl.NumberFormat("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(previewItem.price)}
                         </td>
                         <td className="py-2 text-center font-medium">
                           {previewItem.qty.toFixed(2)} Pcs
                         </td>
                         <td className="py-2 text-right font-mono text-slate-600">
                           {previewItem.discount > 0
-                            ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.discount)
+                            ? new Intl.NumberFormat("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(previewItem.discount)
                             : "0.00"}
                         </td>
                         <td className="py-2 text-right font-mono font-bold text-slate-900">
-                          {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.total)}
+                          {new Intl.NumberFormat("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(previewItem.total)}
                         </td>
                       </tr>
-                      <tr className="h-6 border-b border-slate-100"><td colSpan={6} /></tr>
+                      <tr className="h-6 border-b border-slate-100">
+                        <td colSpan={6} />
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -825,7 +862,8 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                   <div className="flex-1 pr-4">
                     {showAmountInWords && (
                       <div className="text-[11px] font-bold uppercase text-slate-800">
-                        Amount in words: <span className="font-extrabold">{numberToWords(previewItem.total)}</span>
+                        Amount in words:{" "}
+                        <span className="font-extrabold">{numberToWords(previewItem.total)}</span>
                       </div>
                     )}
                   </div>
@@ -834,27 +872,40 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
                     <div className="flex justify-between">
                       <span className="text-slate-600">Sub Total:</span>
                       <span className="font-mono font-bold">
-                        {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.price * previewItem.qty)}
+                        {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(previewItem.price * previewItem.qty)}
                       </span>
                     </div>
                     {previewItem.discount > 0 && (
                       <div className="flex justify-between text-red-600">
                         <span>Discount:</span>
                         <span className="font-mono font-bold">
-                          - {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.discount)}
+                          -{" "}
+                          {new Intl.NumberFormat("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(previewItem.discount)}
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between">
                       <span className="text-slate-600">Gross Total:</span>
                       <span className="font-mono font-bold">
-                        {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.total)}
+                        {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(previewItem.total)}
                       </span>
                     </div>
                     <div className="flex justify-between border-t border-slate-300 pt-1 font-bold text-slate-900">
                       <span>Paid Amount:</span>
                       <span className="font-mono">
-                        {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(previewItem.total)}
+                        {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(previewItem.total)}
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-600">
@@ -896,7 +947,10 @@ export function InvoiceSettingsModal({ open, onClose }: InvoiceSettingsModalProp
 
                 {/* Footer copyright */}
                 <div className="mt-6 pt-2 text-center text-[9px] text-slate-500 font-mono tracking-wider border-t border-slate-100">
-                  {invoiceFooterNote || (shopName ? `${shopName.toUpperCase()} © ${new Date().getFullYear()}` : `STORE © ${new Date().getFullYear()}`)}
+                  {invoiceFooterNote ||
+                    (shopName
+                      ? `${shopName.toUpperCase()} © ${new Date().getFullYear()}`
+                      : `STORE © ${new Date().getFullYear()}`)}
                 </div>
               </div>
             </div>

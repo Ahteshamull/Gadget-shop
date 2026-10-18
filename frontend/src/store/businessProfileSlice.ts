@@ -92,7 +92,7 @@ const defaultInvoiceTerms = [
 const initialState: BusinessProfileState = {
   businessType: "single",
   owners: [],
-  shopName: "Phone Bazar",
+  shopName: "Gadgets",
   shopTagline: "SALES CONSOLE",
   shopLogoUrl: "",
   loginHeadline: "Track every phone.\nOwn every customer.",
@@ -221,7 +221,8 @@ const businessProfileSlice = createSlice({
       })
       .addCase(fetchBusinessProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.businessType = action.payload.businessType || (action.payload.owners.length > 1 ? "multiple" : "single");
+        state.businessType =
+          action.payload.businessType || (action.payload.owners.length > 1 ? "multiple" : "single");
         state.owners = action.payload.owners;
         state.shopName = action.payload.shopName || state.shopName;
         state.shopTagline = action.payload.shopTagline || state.shopTagline;
@@ -256,7 +257,8 @@ const businessProfileSlice = createSlice({
       })
       .addCase(saveBusinessProfile.fulfilled, (state, action) => {
         state.saving = false;
-        state.businessType = action.payload.businessType || (action.payload.owners.length > 1 ? "multiple" : "single");
+        state.businessType =
+          action.payload.businessType || (action.payload.owners.length > 1 ? "multiple" : "single");
         state.owners = action.payload.owners;
         state.shopName = action.payload.shopName || state.shopName;
         state.shopTagline = action.payload.shopTagline || state.shopTagline;

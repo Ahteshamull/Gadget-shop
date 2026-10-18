@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { ShopExpense } from "@/lib/phone-store";
-import { profit } from "@/lib/phone-store";
 import { buildBusinessAccounting } from "@/lib/business-accounting";
 import { fmt, PageHeader } from "@/lib/phone-ui";
 import { ExpenseRecordsTable } from "@/components/partner/ExpenseRecordsTable";
@@ -30,6 +29,7 @@ import {
   deletePartnerTransaction,
   deleteShopExpense,
 } from "../store/partnerSlice";
+import { fetchGadgets, fetchGadgetSales } from "../store/gadgetsSlice";
 import { BusinessOwnershipModal } from "@/components/partner/BusinessOwnershipModal";
 import { CreateUserModal } from "@/components/partner/CreateUserModal";
 import { fetchManagedUsers, type AccessRole } from "../store/userManagementSlice";
@@ -38,7 +38,7 @@ import { AlertTriangle, Building2, Plus, Settings, UserPlus, X } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/partner")({
-  head: () => ({ meta: [{ title: "Partner Ledger - PhoneTrack" }] }),
+  head: () => ({ meta: [{ title: "Partner & Expenses — Gadget POS" }] }),
   component: PartnerLedger,
 });
 
@@ -63,7 +63,6 @@ const initialExpenseRows = (): ExpenseRows => ({
 
 function PartnerLedger() {
   const dispatch = useAppDispatch();
-  const sales = useAppSelector((state) => state.phoneSales.items);
   const gadgets = useAppSelector((state) => state.gadgets.gadgets);
   const gadgetSales = useAppSelector((state) => state.gadgets.sales);
   const transactions = useAppSelector((state) => state.partner.transactions);
@@ -78,6 +77,8 @@ function PartnerLedger() {
   useEffect(() => {
     dispatch(fetchManagedUsers());
     dispatch(fetchBusinessProfile());
+    dispatch(fetchGadgets());
+    dispatch(fetchGadgetSales());
   }, [dispatch]);
 
   const [activeTab, setActiveTab] = useState<PartnerTab>("overview");
@@ -153,9 +154,6 @@ function PartnerLedger() {
   }, [configuredOwners, managedUsers, transactions]);
 
   const salesMetrics = useMemo<SalesMetrics>(() => {
-    const soldPhones = sales.filter((sale) => sale.customerName.trim() !== "");
-    const phoneRevenue = soldPhones.reduce((sum, sale) => sum + sale.finalPrice, 0);
-    const phoneProfit = soldPhones.reduce((sum, sale) => sum + profit(sale), 0);
     const gadgetRevenue = gadgetSales.reduce((sum, sale) => sum + sale.totalPrice, 0);
     const gadgetProfit = gadgetSales.reduce((sum, sale) => {
       const gadget = gadgets.find((item) => item.id === sale.gadgetId);
@@ -164,12 +162,12 @@ function PartnerLedger() {
     }, 0);
 
     return {
-      revenue: phoneRevenue + gadgetRevenue,
-      grossProfit: phoneProfit + gadgetProfit,
-      phoneSales: soldPhones.length,
+      revenue: gadgetRevenue,
+      grossProfit: gadgetProfit,
+      phoneSales: 0,
       gadgetSales: gadgetSales.reduce((sum, sale) => sum + sale.quantity, 0),
     };
-  }, [sales, gadgets, gadgetSales]);
+  }, [gadgets, gadgetSales]);
 
   const expenseMetrics = useMemo<ExpenseMetrics>(() => {
     const totals: ExpenseMetrics = {
@@ -197,12 +195,12 @@ function PartnerLedger() {
   const businessAccounting = useMemo(() => {
     return buildBusinessAccounting({
       partnerTransactions: transactions,
-      phoneSales: sales,
+      phoneSales: [],
       gadgets,
       gadgetSales,
       expenses,
     });
-  }, [transactions, sales, gadgets, gadgetSales, expenses]);
+  }, [transactions, gadgets, gadgetSales, expenses]);
 
   const netProfit = businessAccounting.summary.availableProfit;
 

@@ -16,6 +16,10 @@ export const gadgetBodySchema = z.object({
   minSellingPrice: z.coerce.number().min(0),
   supplierPhone: z.string().trim().min(1),
   color: z.string().trim().min(1),
+  category: z.string().trim().optional().default("General"),
+  brand: z.string().trim().optional().default("Generic"),
+  barcode: z.string().trim().optional().default(""),
+  warrantyDays: z.coerce.number().int().min(0).optional().default(0),
   details: z.string().optional().default(""),
   createdAt: z.coerce.date().optional().default(() => new Date()),
 });

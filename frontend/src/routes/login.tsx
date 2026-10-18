@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
-  Smartphone,
+  Headphones,
   Lock,
   Mail,
   Eye,
@@ -22,8 +22,8 @@ import { apiErrorMessage } from "../store/apiTypes";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Login — PhoneTrack" },
-      { name: "description", content: "Sign in to your PhoneTrack admin panel." },
+      { title: "Login — Gadget POS" },
+      { name: "description", content: "Sign in to your Gadget POS management panel." },
     ],
   }),
   component: LoginPage,
@@ -44,12 +44,16 @@ function LoginPage() {
   // Dynamic custom banner & branding states
   const [customBanner, setCustomBanner] = useState<string>("");
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [shopName, setShopName] = useState<string>("Phone Bazar");
-  const [shopTagline, setShopTagline] = useState<string>("SALES CONSOLE");
+  const [shopName, setShopName] = useState<string>("Gadget Shop");
+  const [shopTagline, setShopTagline] = useState<string>("SMART GADGETS & POS");
   const [shopLogoUrl, setShopLogoUrl] = useState<string>("");
-  const [loginHeadline, setLoginHeadline] = useState<string>("Track every phone.\nOwn every customer.");
-  const [loginDescription, setLoginDescription] = useState<string>("Manage stock, sales, warranties, and customer history by IMEI.");
-  const [loginFooterText, setLoginFooterText] = useState<string>("PhoneTrack admin panel");
+  const [loginHeadline, setLoginHeadline] = useState<string>(
+    "Track every gadget.\nSell with speed.",
+  );
+  const [loginDescription, setLoginDescription] = useState<string>(
+    "Manage smart accessories, inventory, warranties, and sales invoices.",
+  );
+  const [loginFooterText, setLoginFooterText] = useState<string>("Gadget POS Management System");
 
   // First-time admin setup state
   const [checkingSetup, setCheckingSetup] = useState(true);
@@ -238,28 +242,38 @@ function LoginPage() {
           <div className="flex items-center gap-3">
             {shopLogoUrl ? (
               <div className="size-12 sm:size-14 rounded-2xl bg-white shadow-xl shadow-black/20 ring-1 ring-white/40 p-1.5 flex items-center justify-center overflow-hidden shrink-0">
-                <img src={shopLogoUrl} alt="Logo" className="size-full object-contain object-center" />
+                <img
+                  src={shopLogoUrl}
+                  alt="Logo"
+                  className="size-full object-contain object-center"
+                />
               </div>
             ) : (
               <div className="size-11 sm:size-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center overflow-hidden border border-white/20 shrink-0 text-white">
-                <Smartphone className="size-6" />
+                <Headphones className="size-6" />
               </div>
             )}
             <div>
-              <div className="font-bold text-white text-base sm:text-lg leading-tight">{shopName || "Phone Bazar"}</div>
-              <div className="text-xs text-white/80 font-semibold uppercase tracking-wider">{shopTagline || "SALES CONSOLE"}</div>
+              <div className="font-bold text-white text-base sm:text-lg leading-tight">
+                {shopName || "Gadgets"}
+              </div>
+              <div className="text-xs text-white/80 font-semibold uppercase tracking-wider">
+                {shopTagline || "SALES CONSOLE"}
+              </div>
             </div>
           </div>
         </div>
         <div className="relative z-10">
           <h1 className="text-3xl xl:text-4xl font-bold leading-tight whitespace-pre-line text-white">
-            {loginHeadline || "Track every phone.\nOwn every customer."}
+            {loginHeadline || "Track every gadget.\nSell with speed."}
           </h1>
           <p className="mt-3 text-sm opacity-90 max-w-md leading-relaxed text-white/90">
-            {loginDescription || "Manage stock, sales, warranties, and customer history by IMEI."}
+            {loginDescription || "Manage smart accessories, inventory, warranties, and sales invoices."}
           </p>
         </div>
-        <div className="relative z-10 text-xs opacity-80">{loginFooterText || "PhoneTrack admin panel"}</div>
+        <div className="relative z-10 text-xs opacity-80">
+          {loginFooterText || "Gadget POS Management System"}
+        </div>
       </div>
 
       {/* Form panel */}
@@ -268,16 +282,22 @@ function LoginPage() {
           <div className="lg:hidden flex items-center gap-3 mb-6">
             {shopLogoUrl ? (
               <div className="size-11 rounded-xl bg-white shadow-sm ring-1 ring-border p-1 flex items-center justify-center overflow-hidden shrink-0">
-                <img src={shopLogoUrl} alt="Logo" className="size-full object-contain object-center" />
+                <img
+                  src={shopLogoUrl}
+                  alt="Logo"
+                  className="size-full object-contain object-center"
+                />
               </div>
             ) : (
               <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground overflow-hidden shrink-0">
-                <Smartphone className="size-5 text-primary-foreground" />
+                <Headphones className="size-5 text-primary-foreground" />
               </div>
             )}
             <div>
-              <div className="font-bold text-base leading-tight">{shopName || "Phone Bazar"}</div>
-              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{shopTagline || "SALES CONSOLE"}</div>
+              <div className="font-bold text-base leading-tight">{shopName || "Gadgets"}</div>
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                {shopTagline || "SALES CONSOLE"}
+              </div>
             </div>
           </div>
 
@@ -408,7 +428,7 @@ function LoginPage() {
             <div>
               <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Sign in to manage your phone sales.
+                Sign in to manage your gadget sales & inventory.
               </p>
 
               <form onSubmit={submit} className="mt-6 space-y-4">
@@ -493,7 +513,8 @@ function LoginPage() {
               <span className="font-semibold block text-amber-800 dark:text-amber-300">
                 Important Notice:
               </span>
-              For any new feature updates, functionality changes, or technical assistance, please contact directly via{" "}
+              For any new feature updates, functionality changes, or technical assistance, please
+              contact directly via{" "}
               <a
                 href="https://wa.me/8801761109515"
                 target="_blank"
@@ -501,7 +522,8 @@ function LoginPage() {
                 className="underline font-bold text-amber-700 dark:text-amber-200"
               >
                 WhatsApp: +880 1761-109515
-              </a>.
+              </a>
+              .
             </div>
           </div>
 

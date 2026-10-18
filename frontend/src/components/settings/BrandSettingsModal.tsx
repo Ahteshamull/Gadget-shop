@@ -124,7 +124,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
 
   useEffect(() => {
     if (open) {
-      setShopName(profile.shopName || "Phone Bazar");
+      setShopName(profile.shopName || "Gadgets");
       setShopTagline(profile.shopTagline || "SALES CONSOLE");
       setShopLogoUrl(profile.shopLogoUrl || "");
       setLoginHeadline(profile.loginHeadline || "Track every phone.\nOwn every customer.");
@@ -179,7 +179,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
     try {
       await dispatch(
         updateBrandingProfileThunk({
-          shopName: shopName.trim() || "Phone Bazar",
+          shopName: shopName.trim() || "Gadgets",
           shopTagline: shopTagline.trim() || "SALES CONSOLE",
           shopLogoUrl,
           loginHeadline: loginHeadline.trim() || "Track every phone.\nOwn every customer.",
@@ -197,7 +197,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
   };
 
   const handleResetDefaults = () => {
-    setShopName("Phone Bazar");
+    setShopName("Gadgets");
     setShopTagline("SALES CONSOLE");
     setShopLogoUrl("");
     setLoginHeadline("Track every phone.\nOwn every customer.");
@@ -209,9 +209,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
 
   return (
     <>
-      <div
-        className="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 transition-opacity"
-      />
+      <div className="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 transition-opacity" />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 pointer-events-none">
         <div className="bg-card text-card-foreground border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95dvh] pointer-events-auto animate-in fade-in-50 zoom-in-95 duration-200">
           {/* Header */}
@@ -240,7 +238,9 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                 title="Toggle live preview"
               >
                 {showMobilePreview ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                <span className="text-[11px] hidden sm:inline">{showMobilePreview ? "Form" : "Preview"}</span>
+                <span className="text-[11px] hidden sm:inline">
+                  {showMobilePreview ? "Form" : "Preview"}
+                </span>
               </button>
               <button
                 onClick={onClose}
@@ -303,7 +303,9 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
           {/* Body Content with Responsive Grid */}
           <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 grid lg:grid-cols-12 gap-5 sm:gap-6">
             {/* Form Section (shown if not in mobile-only preview mode) */}
-            <div className={`space-y-4 ${showMobilePreview ? "hidden lg:block" : "block"} lg:col-span-7`}>
+            <div
+              className={`space-y-4 ${showMobilePreview ? "hidden lg:block" : "block"} lg:col-span-7`}
+            >
               {activeTab === "identity" && (
                 <div className="space-y-3.5 animate-in fade-in-50 duration-200">
                   <div className="p-3 sm:p-3.5 rounded-xl bg-muted/30 border border-border/60">
@@ -314,7 +316,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                       type="text"
                       value={shopName}
                       onChange={(e) => setShopName(e.target.value)}
-                      placeholder="e.g. Phone Bazar"
+                      placeholder="e.g. Gadgets"
                       className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">
@@ -340,9 +342,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
 
                   <div className="p-3 sm:p-3.5 rounded-xl bg-muted/30 border border-border/60 space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-foreground">
-                        Shop Logo
-                      </label>
+                      <label className="text-xs font-semibold text-foreground">Shop Logo</label>
                       {shopLogoUrl && (
                         <button
                           type="button"
@@ -487,7 +487,9 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
             </div>
 
             {/* Live Visual Preview Section (responsive: full width when toggled or on desktop) */}
-            <div className={`flex flex-col ${showMobilePreview ? "block lg:block" : "hidden lg:flex"} lg:col-span-5`}>
+            <div
+              className={`flex flex-col ${showMobilePreview ? "block lg:block" : "hidden lg:flex"} lg:col-span-5`}
+            >
               <div className="flex items-center justify-between text-xs font-bold text-foreground mb-2">
                 <div className="flex items-center gap-1.5">
                   <Eye className="size-3.5 text-cyan-500" />
@@ -528,7 +530,11 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                 <div className="relative z-10 flex items-center gap-3">
                   {shopLogoUrl ? (
                     <div className="size-10 sm:size-11 rounded-xl bg-white shadow-md ring-1 ring-white/30 p-1 flex items-center justify-center overflow-hidden shrink-0">
-                      <img src={shopLogoUrl} alt="" className="size-full object-contain object-center" />
+                      <img
+                        src={shopLogoUrl}
+                        alt=""
+                        className="size-full object-contain object-center"
+                      />
                     </div>
                   ) : (
                     <div className="size-8 sm:size-9 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
@@ -537,7 +543,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                   )}
                   <div className="min-w-0">
                     <div className="font-bold text-xs sm:text-sm leading-tight truncate text-white">
-                      {shopName || "Phone Bazar"}
+                      {shopName || "Gadgets"}
                     </div>
                     <div className="text-[9px] sm:text-[10px] text-cyan-300/80 font-semibold tracking-wide truncate uppercase">
                       {shopTagline || "SALES CONSOLE"}
@@ -570,7 +576,11 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                 <div className="flex items-center gap-2.5 sm:gap-3 p-2 rounded-xl bg-sidebar border border-sidebar-border shadow-xs">
                   {shopLogoUrl ? (
                     <div className="size-8 sm:size-9 rounded-xl bg-white p-0.5 shadow-xs ring-1 ring-black/10 flex items-center justify-center overflow-hidden shrink-0 dark:bg-white">
-                      <img src={shopLogoUrl} alt="" className="size-full object-contain object-center" />
+                      <img
+                        src={shopLogoUrl}
+                        alt=""
+                        className="size-full object-contain object-center"
+                      />
                     </div>
                   ) : (
                     <div className="size-7 sm:size-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white overflow-hidden shrink-0">
@@ -579,7 +589,7 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
                   )}
                   <div className="min-w-0">
                     <div className="font-bold text-xs text-sidebar-foreground truncate">
-                      {shopName || "Phone Bazar"}
+                      {shopName || "Gadgets"}
                     </div>
                     <div className="text-[8px] sm:text-[9px] font-bold text-cyan-500 tracking-wider uppercase truncate">
                       {shopTagline || "SALES CONSOLE"}
@@ -601,7 +611,13 @@ export function BrandSettingsModal({ open, onClose }: BrandSettingsModalProps) {
             </button>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="flex-1 sm:flex-none">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="flex-1 sm:flex-none"
+              >
                 Cancel
               </Button>
               <Button

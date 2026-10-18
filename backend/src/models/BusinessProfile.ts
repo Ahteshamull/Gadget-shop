@@ -15,12 +15,12 @@ const businessProfileSchema = new Schema(
     businessType: { type: String, enum: ["single", "multiple"], default: "single", required: true },
     owners: { type: [ownerSchema], default: [] },
     configuredBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
-    shopName: { type: String, default: "Phone Bazar", trim: true },
-    shopTagline: { type: String, default: "SALES CONSOLE", trim: true },
+    shopName: { type: String, default: "Gadget Shop", trim: true },
+    shopTagline: { type: String, default: "SMART GADGETS & POS", trim: true },
     shopLogoUrl: { type: String, default: "" },
-    loginHeadline: { type: String, default: "Track every phone.\nOwn every customer.", trim: true },
-    loginDescription: { type: String, default: "Manage stock, sales, warranties, and customer history by IMEI.", trim: true },
-    loginFooterText: { type: String, default: "PhoneTrack admin panel", trim: true },
+    loginHeadline: { type: String, default: "Track every gadget.\nSell with speed.", trim: true },
+    loginDescription: { type: String, default: "Manage smart accessories, inventory, warranties, and sales invoices.", trim: true },
+    loginFooterText: { type: String, default: "Gadget POS Management System", trim: true },
     loginBannerUrl: { type: String, default: "" },
 
     // Invoice & Memo Configuration

@@ -48,7 +48,6 @@ function GadgetPage() {
   const dispatch = useAppDispatch();
   const gadgets = useAppSelector((state) => state.gadgets.gadgets);
   const sales = useAppSelector((state) => state.gadgets.sales);
-  const phoneSales = useAppSelector((state) => state.phoneSales.items);
   const partnerTransactions = useAppSelector(
     (state) => state.partner.transactions,
   );
@@ -156,7 +155,7 @@ function GadgetPage() {
       Number(addForm.quantity) * Number(addForm.purchasePrice);
     const availableCash = availableCashBeforePurchase({
       partnerTransactions,
-      phoneSales,
+      phoneSales: [],
       gadgets,
       gadgetSales: sales,
       expenses,

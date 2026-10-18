@@ -86,6 +86,14 @@ export const createGadgetSale = asyncHandler(async (req, res) => {
   payload.totalPrice = payload.quantity * payload.sellingPrice;
   payload.invoiceNumber = await nextGadgetInvoiceNumber();
 
+  const warrantyDays = Number(payload.warrantyDays ?? gadget.warrantyDays ?? 0);
+  if (warrantyDays > 0 && !payload.warrantyExpiry) {
+    payload.warrantyDays = warrantyDays;
+    const expiry = new Date(payload.saleDate ? new Date(payload.saleDate) : Date.now());
+    expiry.setDate(expiry.getDate() + warrantyDays);
+    payload.warrantyExpiry = expiry;
+  }
+
   const sale = await GadgetSaleModel.create(payload);
   return sendCreated(res, "Gadget sale registered successfully", {
     ...sale.toJSON(),

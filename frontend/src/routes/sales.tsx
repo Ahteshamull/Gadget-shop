@@ -1,502 +1,599 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Smartphone,
-  Receipt,
-  Plus,
-  Trash2,
-  Pencil,
-  Eye,
-  User,
   ShoppingCart,
+  Receipt,
+  Search,
+  Boxes,
   CheckCircle2,
-  ChevronDown,
-  Search as SearchIcon,
-  X,
+  Printer,
+  ShieldCheck,
+  Tag,
+  CreditCard,
+  User,
+  Phone,
+  FileText,
+  BadgeAlert,
 } from "lucide-react";
-import { nextInvoiceNumber, Sale } from "@/lib/phone-store";
-import { availableCashBeforePurchase } from "@/lib/business-accounting";
-import { fmt, PageHeader, CustomerMemoModal } from "@/lib/phone-ui";
+import {
+  getGadgetAvailableQuantity,
+  type Gadget,
+  type GadgetSale,
+} from "@/lib/gadget-store";
+import { fmt, PageHeader } from "@/lib/phone-ui";
 import { useAppDispatch, useAppSelector } from "../store";
 import {
-  registerPhoneStock,
-  updatePhoneStock,
-  deletePhoneStock,
-  type PhoneStockCreatePayload,
-} from "../store/phoneSalesSlice";
+  fetchGadgets,
+  fetchGadgetSales,
+  sellGadget,
+} from "../store/gadgetsSlice";
 import { toast } from "sonner";
-import { BarcodeScannerModal } from "@/components/scanner/BarcodeScannerModal";
-import {
-  parseScannedCode,
-  lookupDeviceFromInventory,
-  resolveNextAvailableImei,
-} from "@/lib/device-scanner-helper";
 import { StatCard } from "@/components/ui/StatCard";
-import {
-  StockSale,
-  blankForm,
-  getAddedByAdmin,
-} from "@/components/sales/salesUtils";
-import { AddStockModal } from "@/components/sales/AddStockModal";
-import { StockDetailModal } from "@/components/sales/StockDetailModal";
-import { DeleteStockModal } from "@/components/sales/DeleteStockModal";
-import { EditStockModal } from "@/components/sales/EditStockModal";
-import {
-  NewSaleWizard,
-  WizardStep,
-  blankCustomer,
-} from "@/components/sales/NewSaleWizard";
-import { StockListTable } from "@/components/sales/StockListTable";
+import { GadgetMemoModal } from "@/components/gadget/GadgetMemoModal";
+import { AppPagination } from "@/components/ui/pagination";
 
 export const Route = createFileRoute("/sales")({
-  head: () => ({ meta: [{ title: "Add Stock — PhoneTrack" }] }),
-  component: StockPage,
+  head: () => ({ meta: [{ title: "Gadget Sales & POS — Gadget POS" }] }),
+  component: GadgetSalesPosPage,
 });
 
-function StockPage() {
+function GadgetSalesPosPage() {
   const dispatch = useAppDispatch();
-  const [form, setForm] = useState<StockSale>(blankForm);
-  const rows = useAppSelector((state) => state.phoneSales.items) as StockSale[];
-  const currentUser = useAppSelector((state) => state.auth.user);
   const gadgets = useAppSelector((state) => state.gadgets.gadgets);
-  const gadgetSales = useAppSelector((state) => state.gadgets.sales);
-  const partnerTransactions = useAppSelector((state) => state.partner.transactions);
-  const expenses = useAppSelector((state) => state.partner.expenses);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<StockSale | null>(null);
-  const [q, setQ] = useState("");
-  const [viewItem, setViewItem] = useState<StockSale | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<StockSale | null>(null);
+  const sales = useAppSelector((state) => state.gadgets.sales);
+  const currentUser = useAppSelector((state) => state.auth.user);
 
-  /* add phone modal state */
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
+  const [selectedGadgetId, setSelectedGadgetId] = useState<string>("");
+  const [productSearch, setProductSearch] = useState<string>("");
+  const [quantity, setQuantity] = useState<number>(1);
+  const [sellingPrice, setSellingPrice] = useState<number>(0);
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [warrantyDays, setWarrantyDays] = useState<number>(30);
+  const [notes, setNotes] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
-  /* barcode scanner modal state */
-  const [scannerOpen, setScannerOpen] = useState(false);
+  // Recent sales filter
+  const [salesSearch, setSalesSearch] = useState<string>("");
+  const [salesPage, setSalesPage] = useState<number>(1);
+  const PAGE_SIZE = 10;
 
-  const handleBarcodeScanned = useCallback(
-    (scannedText: string) => {
-      const parsed = parseScannedCode(scannedText);
-      const rawImei = parsed.imei || scannedText.trim();
-      const resolved = resolveNextAvailableImei(rawImei, rows.map((r) => r.imei));
-      const targetImei = resolved.finalImei;
-      const historyMatch = lookupDeviceFromInventory(resolved.baseImei, rows);
+  // Selected sale for viewing memo
+  const [viewMemoSale, setViewMemoSale] = useState<GadgetSale | null>(null);
 
-      setForm((prev) => {
-        const next = { ...prev, imei: targetImei };
-        if (parsed.brand) next.brand = parsed.brand;
-        else if (historyMatch?.brand && !prev.brand) next.brand = historyMatch.brand;
-
-        if (parsed.model) next.model = parsed.model;
-        else if (historyMatch?.model && !prev.model) next.model = historyMatch.model;
-
-        if (parsed.variant) next.variant = parsed.variant;
-        else if (historyMatch?.variant && !prev.variant) next.variant = historyMatch.variant;
-
-        if (parsed.ram) next.ram = parsed.ram;
-        else if (historyMatch?.ram && !prev.ram) next.ram = historyMatch.ram;
-
-        if (parsed.storage) next.storage = parsed.storage;
-        else if (historyMatch?.storage && !prev.storage) next.storage = historyMatch.storage;
-
-        if (parsed.color) next.color = parsed.color;
-        else if (historyMatch?.color && !prev.color) next.color = historyMatch.color;
-        return next;
-      });
-
-      if (resolved.isRepeated) {
-        toast.success(
-          `IMEI ${resolved.baseImei} previously registered. Assigned ${targetImei} for restock.`,
-        );
-      } else if (historyMatch?.model) {
-        toast.success(
-          `IMEI ${targetImei} scanned! Matched from inventory specs: ${historyMatch.brand} ${historyMatch.model}`,
-        );
-      } else {
-        toast.success(`IMEI ${targetImei} scanned successfully!`);
-      }
-    },
-    [rows],
-  );
-
-  // Hardware barcode scanner gun listener (rapid keypresses ending in Enter)
   useEffect(() => {
-    let buffer = "";
-    let lastKeyTime = Date.now();
+    dispatch(fetchGadgets());
+    dispatch(fetchGadgetSales());
+  }, [dispatch]);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
-      ) {
-        return;
-      }
+  // Selected Gadget object
+  const selectedGadget = useMemo(() => {
+    return gadgets.find((g) => g.id === selectedGadgetId) || null;
+  }, [gadgets, selectedGadgetId]);
 
-      const currentTime = Date.now();
-      if (currentTime - lastKeyTime > 120) {
-        buffer = "";
-      }
-      lastKeyTime = currentTime;
+  // Available quantity of selected gadget
+  const availableQty = useMemo(() => {
+    if (!selectedGadget) return 0;
+    return getGadgetAvailableQuantity(selectedGadget, sales);
+  }, [selectedGadget, sales]);
 
-      if (e.key === "Enter") {
-        if (buffer.length >= 8) {
-          handleBarcodeScanned(buffer);
-          buffer = "";
-        }
-      } else if (e.key.length === 1) {
-        buffer += e.key;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleBarcodeScanned]);
-
-  /* wizard state */
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [step, setStep] = useState<"pick" | "customer">("pick");
-  const [wizardQ, setWizardQ] = useState("");
-  const [pickedPhone, setPickedPhone] = useState<Sale | null>(null);
-  const [customerForm, setCustomerForm] = useState<ReturnType<typeof blankCustomer> | null>(null);
-  const [successId, setSuccessId] = useState<string | null>(null);
-  const [showSuccessMemo, setShowSuccessMemo] = useState(false);
-  const [memoSale, setMemoSale] = useState<Sale | null>(null);
-
-  const availablePhones = useMemo(() => {
-    const wq = wizardQ.trim().toLowerCase();
-    const inStock = rows.filter((r) => !r.customerName);
-    if (!wq) return inStock;
-    return inStock.filter(
-      (r) =>
-        r.imei?.toLowerCase().includes(wq) ||
-        r.brand?.toLowerCase().includes(wq) ||
-        r.model?.toLowerCase().includes(wq) ||
-        r.color?.toLowerCase().includes(wq) ||
-        r.storage?.toLowerCase().includes(wq),
-    );
-  }, [rows, wizardQ]);
-
-  const updateRow = (id: string, patch: Partial<Sale>) => {
-    dispatch(updatePhoneStock({ id, patch }));
+  // When gadget is selected, initialize price and warranty
+  const handleSelectGadget = (gadget: Gadget) => {
+    setSelectedGadgetId(gadget.id);
+    setSellingPrice(gadget.minSellingPrice);
+    setQuantity(1);
+    setWarrantyDays((gadget as any).warrantyDays || 30);
   };
 
-  const openWizard = () => {
-    setWizardOpen(true);
-    setStep("pick");
-    setWizardQ("");
-    setPickedPhone(null);
-    setCustomerForm(null);
-    setSuccessId(null);
-  };
+  // Filter gadgets for quick picker
+  const filteredGadgets = useMemo(() => {
+    return gadgets.filter((g) => {
+      const q = productSearch.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        g.productName.toLowerCase().includes(q) ||
+        g.color.toLowerCase().includes(q) ||
+        (g.supplierName && g.supplierName.toLowerCase().includes(q))
+      );
+    });
+  }, [gadgets, productSearch]);
 
-  const startSale = (phone: Sale) => {
-    setPickedPhone(phone);
-    setCustomerForm(blankCustomer(phone));
-    setStep("customer");
-    setWizardOpen(true);
-    setSuccessId(null);
-  };
+  // POS Calculations
+  const totalPrice = useMemo(() => {
+    return Math.max(0, quantity * sellingPrice);
+  }, [quantity, sellingPrice]);
 
-  const confirmSale = () => {
-    if (!pickedPhone || !customerForm) return;
-    if (!customerForm.customerName.trim()) {
+  const canSubmit =
+    Boolean(selectedGadget) &&
+    quantity > 0 &&
+    quantity <= availableQty &&
+    sellingPrice >= (selectedGadget?.minSellingPrice ?? 0) &&
+    customerName.trim().length > 0 &&
+    customerPhone.trim().length > 0 &&
+    !submitting;
+
+  const handleSaleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedGadget) {
+      toast.error("Please select a gadget to sell");
+      return;
+    }
+    if (quantity > availableQty) {
+      toast.error(`Only ${availableQty} units available in stock`);
+      return;
+    }
+    if (sellingPrice < selectedGadget.minSellingPrice) {
+      toast.error(`Selling price cannot be below minimum price of ${fmt(selectedGadget.minSellingPrice)}`);
+      return;
+    }
+    if (!customerName.trim()) {
       toast.error("Customer name is required");
       return;
     }
-    const basePrice = Math.max(0, customerForm.finalPrice || 0);
-    const disc = Math.max(0, customerForm.discount || 0);
-    if (basePrice <= 0) {
-      toast.error("Final price must be greater than 0.");
+    if (!customerPhone.trim()) {
+      toast.error("Customer phone is required");
       return;
     }
-    if (disc > basePrice) {
-      toast.error("Discount cannot be greater than the actual sell price.");
-      return;
-    }
-    const totalPrice = basePrice - disc;
-    const days = Math.max(0, customerForm.warrantyDays ?? 365);
-    const warrantyExpiry = new Date(Date.now() + days * 86400000).toISOString();
-    const patch: Partial<Sale> = {
-      ...customerForm,
-      saleDate: new Date().toISOString(),
-      finalPrice: totalPrice,
-      discount: disc,
-      warrantyExpiry,
-      invoiceNumber: nextInvoiceNumber(),
-      ownership: [
-        {
-          owner: customerForm.customerName,
-          phone: customerForm.customerPhone,
-          transferDate: new Date().toISOString(),
-          note: "First buyer",
-        },
-      ],
-    };
-    updateRow(pickedPhone.id, patch);
-    setSuccessId(pickedPhone.id);
-    setStep("pick"); // reset to show success
-  };
 
-  const closeWizard = () => {
-    setWizardOpen(false);
-    setPickedPhone(null);
-    setCustomerForm(null);
-    setWizardQ("");
-    setSuccessId(null);
-  };
-
-  const setCustomer = <K extends keyof ReturnType<typeof blankCustomer>>(
-    k: K,
-    v: ReturnType<typeof blankCustomer>[K],
-  ) => setCustomerForm((f) => (f ? { ...f, [k]: v } : f));
-
-  const set = <K extends keyof StockSale>(k: K, v: StockSale[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  const finalPrice = useMemo(
-    () => Math.max(0, (form.sellingPrice || 0) - (form.discount || 0)),
-    [form.sellingPrice, form.discount],
-  );
-  const profitAmt = finalPrice - (form.purchasePrice || 0);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (addLoading) return;
-    if (!form.imei) {
-      toast.error("IMEI is required");
-      return;
-    }
-    const availableCash = availableCashBeforePurchase({
-      partnerTransactions,
-      phoneSales: rows,
-      gadgets,
-      gadgetSales,
-      expenses,
-    });
-    if (form.purchasePrice > availableCash) {
-      toast.error(
-        `Not enough business cash to buy this phone. Available cash: ${fmt(availableCash)}.`,
-      );
-      return;
-    }
-    const resolvedImei = resolveNextAvailableImei(form.imei, rows.map((r) => r.imei)).finalImei;
-
-    const record: PhoneStockCreatePayload = {
-      imei: resolvedImei || form.imei,
-      brand: form.brand,
-      model: form.model,
-      variant: form.variant,
-      color: form.color,
-      ram: form.ram,
-      storage: form.storage,
-      purchasePrice: form.purchasePrice,
-      sellingPrice: form.sellingPrice,
-      sellerNID: form.sellerNID,
-      supplierName: form.supplierName,
-      supplierPhone: form.supplierPhone,
-      buyerName: form.supplierName,
-      buyerPhone: form.supplierPhone,
-      warrantyExpiry: form.warrantyExpiry,
-      salesPerson: currentUser?.name || "Mehedi",
-      addedBy: currentUser?.name || "Mehedi",
-    };
     try {
-      setAddLoading(true);
-      await dispatch(registerPhoneStock(record)).unwrap();
-      setForm(blankForm());
-      setAddModalOpen(false);
-    } catch {
-      // Error toast is already handled in thunk
+      setSubmitting(true);
+      const saleDate = new Date().toISOString();
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + Number(warrantyDays || 0));
+
+      const payload = {
+        gadgetId: selectedGadget.id,
+        productName: selectedGadget.productName,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        saleDate,
+        quantity: Number(quantity),
+        sellingPrice: Number(sellingPrice),
+        totalPrice,
+        paymentMethod,
+        invoiceNumber: "", // auto-generated by backend
+        notes: notes.trim(),
+        salesPerson: currentUser?.name || "Admin",
+        warrantyDays: Number(warrantyDays || 0),
+        warrantyExpiry: Number(warrantyDays || 0) > 0 ? expiry.toISOString() : undefined,
+      };
+
+      const resultAction = await dispatch(sellGadget(payload));
+      if (sellGadget.fulfilled.match(resultAction)) {
+        const createdSale = resultAction.payload;
+        setViewMemoSale(createdSale);
+
+        // Reset form
+        setSelectedGadgetId("");
+        setProductSearch("");
+        setCustomerName("");
+        setCustomerPhone("");
+        setNotes("");
+        setQuantity(1);
+      }
     } finally {
-      setAddLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const requestDelete = (item: StockSale) => {
-    setDeleteTarget(item);
-  };
-
-  const confirmDelete = () => {
-    if (!deleteTarget) return;
-    dispatch(deletePhoneStock(deleteTarget.id));
-    if (viewItem?.id === deleteTarget.id) setViewItem(null);
-    if (editId === deleteTarget.id) cancelEdit();
-    setDeleteTarget(null);
-  };
-
-  const startEdit = (r: StockSale) => {
-    setEditId(r.id);
-    setDraft({ ...r });
-  };
-  const cancelEdit = () => {
-    setEditId(null);
-    setDraft(null);
-  };
-  const saveEdit = () => {
-    if (!draft) return;
-    dispatch(updatePhoneStock({ id: draft.id, patch: draft }));
-    cancelEdit();
-  };
-
-  const availableOnlyRows = useMemo(() => rows.filter((r) => !r.customerName), [rows]);
-
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return availableOnlyRows;
-    return availableOnlyRows.filter(
-      (r) =>
-        r.imei.toLowerCase().includes(s) ||
-        r.brand.toLowerCase().includes(s) ||
-        r.model.toLowerCase().includes(s) ||
-        (r.supplierName || "").toLowerCase().includes(s) ||
-        (r.supplierPhone || "").toLowerCase().includes(s) ||
-        getAddedByAdmin(r, currentUser?.name).toLowerCase().includes(s),
+  // Recent Sales Table filtered
+  const filteredSales = useMemo(() => {
+    const q = salesSearch.toLowerCase().trim();
+    if (!q) return sales;
+    return sales.filter(
+      (s) =>
+        s.customerName.toLowerCase().includes(q) ||
+        s.customerPhone.toLowerCase().includes(q) ||
+        s.productName.toLowerCase().includes(q) ||
+        s.invoiceNumber.toLowerCase().includes(q)
     );
-  }, [availableOnlyRows, q]);
+  }, [sales, salesSearch]);
+
+  const paginatedSales = useMemo(() => {
+    const start = (salesPage - 1) * PAGE_SIZE;
+    return filteredSales.slice(start, start + PAGE_SIZE);
+  }, [filteredSales, salesPage]);
+
+  // Today's statistics
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySales = sales.filter((s) => s.saleDate.slice(0, 10) === today);
+  const todayRevenue = todaySales.reduce((sum, s) => sum + s.totalPrice, 0);
+  const todayItemsSold = todaySales.reduce((sum, s) => sum + s.quantity, 0);
 
   return (
-    <div className="w-full px-4 md:px-6 lg:px-8 max-w-[1800px] mx-auto min-h-[calc(100dvh-5.5rem)] flex flex-col pb-4">
+    <div className="w-full px-4 md:px-6 lg:px-8 max-w-[1800px] mx-auto pb-10 space-y-6">
       <PageHeader
-        title="Add Stock"
-        subtitle="Register, edit, sell, and delete devices in inventory"
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#8b5cf6] via-[#7c3aed] to-[#6366f1] text-white font-semibold text-sm border border-white/25 shadow-[0_0_20px_rgba(139,92,246,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:shadow-[0_0_28px_rgba(139,92,246,0.55),inset_0_1px_2px_rgba(255,255,255,0.6)] hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden cursor-pointer"
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <Plus className="size-4.5 transition-transform duration-300 group-hover:rotate-90" />
-            Add Phone Stock
-          </button>
-          <button
-            onClick={openWizard}
-            className="group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white font-semibold text-sm border border-white/25 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden cursor-pointer"
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <ShoppingCart className="size-4.5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
-            Add New Sale
-          </button>
-        </div>
-      </PageHeader>
+        title="Gadget Sales & POS Terminal"
+        subtitle="Quick sales checkout, customer memo billing, and instant inventory deduction"
+      />
 
-      {/* KPI Cards Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 sm:mb-4">
+      {/* Top Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          label="Total Stock"
-          value={availableOnlyRows.length}
-          sub={`${availableOnlyRows.length} available in inventory`}
-          todaySub="In stock ready to sell"
-          icon={Smartphone}
+          label="Today's Sales Revenue"
+          value={fmt(todayRevenue)}
+          sub={`${todayItemsSold} item(s) sold today`}
+          icon={Receipt}
+          variant="emerald"
+        />
+        <StatCard
+          label="Total Gadget Items in Stock"
+          value={gadgets.reduce((acc, g) => acc + getGadgetAvailableQuantity(g, sales), 0).toLocaleString()}
+          sub={`${gadgets.length} unique gadget models`}
+          icon={Boxes}
           variant="blue"
         />
         <StatCard
-          label="Available in Inventory"
-          value={rows.filter((r) => !r.customerName).length}
-          sub="Ready to sell"
-          todaySub="In stock"
-          icon={CheckCircle2}
-          variant="indigo"
-          progress={rows.length > 0 ? (rows.filter((r) => !r.customerName).length / rows.length) * 100 : 0}
-        />
-        <StatCard
-          label="Sold Devices"
-          value={rows.filter((r) => !!r.customerName).length}
-          sub="Customer completed orders"
-          todaySub={`${rows.length > 0 ? ((rows.filter((r) => !!r.customerName).length / rows.length) * 100).toFixed(0) : 0}% clearance`}
+          label="Today's Transactions"
+          value={todaySales.length.toLocaleString()}
+          sub="Recorded customer invoices"
           icon={ShoppingCart}
-          variant="emerald"
-          progress={rows.length > 0 ? (rows.filter((r) => !!r.customerName).length / rows.length) * 100 : 0}
+          variant="indigo"
         />
       </div>
 
-      {/* ── MODAL: ADD PHONE STOCK ──────────────────────── */}
-      <AddStockModal
-        open={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        form={form}
-        setForm={setForm}
-        onSubmit={submit}
-        addLoading={addLoading}
-        onOpenScanner={() => setScannerOpen(true)}
-        existingStocks={rows}
-      />
+      {/* Main POS Section: 2 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Product Picker (5 cols) */}
+        <div className="lg:col-span-5 bg-card border rounded-2xl p-5 shadow-xs flex flex-col h-full max-h-[700px]">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <Boxes className="size-5 text-primary" />
+              <span>Select In-Stock Gadget</span>
+            </div>
+            <span className="text-xs text-muted-foreground font-semibold">
+              {filteredGadgets.length} available
+            </span>
+          </div>
 
-      <StockListTable
-        filtered={filtered}
-        q={q}
-        setQ={setQ}
-        onView={setViewItem}
-        onEdit={startEdit}
-        onDelete={requestDelete}
-        currentUserName={currentUser?.name}
-      />
+          {/* Product Search */}
+          <div className="relative mb-3">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search product by name or color..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
 
-      {viewItem && (
-        <StockDetailModal
-          item={viewItem}
-          onClose={() => setViewItem(null)}
-          onEdit={() => {
-            const currentItem = viewItem;
-            setViewItem(null);
-            setTimeout(() => {
-              startEdit(currentItem);
-            }, 60);
-          }}
+          {/* Product List */}
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {filteredGadgets.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                No gadgets found in stock matching "{productSearch}".
+              </div>
+            ) : (
+              filteredGadgets.map((gadget) => {
+                const stockLeft = getGadgetAvailableQuantity(gadget, sales);
+                const isSelected = selectedGadgetId === gadget.id;
+                const isOutOfStock = stockLeft <= 0;
+
+                return (
+                  <div
+                    key={gadget.id}
+                    onClick={() => {
+                      if (!isOutOfStock) handleSelectGadget(gadget);
+                    }}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? "border-primary bg-primary/10 shadow-xs"
+                        : isOutOfStock
+                        ? "opacity-50 cursor-not-allowed bg-muted/20 border-dashed"
+                        : "hover:border-primary/40 hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm truncate text-foreground">
+                        {gadget.productName}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                        <span>Color: {gadget.color}</span>
+                        <span>·</span>
+                        <span className="font-medium text-foreground">
+                          Min: {fmt(gadget.minSellingPrice)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span
+                        className={`inline-block px-2 py-0.5 text-xs font-bold rounded-md ${
+                          stockLeft > 5
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : stockLeft > 0
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-destructive/15 text-destructive"
+                        }`}
+                      >
+                        {stockLeft > 0 ? `${stockLeft} in stock` : "Out of Stock"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: POS Billing Form (7 cols) */}
+        <div className="lg:col-span-7 bg-card border rounded-2xl p-5 shadow-xs">
+          <form onSubmit={handleSaleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 font-bold text-foreground">
+                <ShoppingCart className="size-5 text-emerald-600" />
+                <span>POS Checkout & Invoice</span>
+              </div>
+              {selectedGadget && (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-bold">
+                  {selectedGadget.productName}
+                </span>
+              )}
+            </div>
+
+            {!selectedGadget ? (
+              <div className="py-16 text-center border-2 border-dashed rounded-xl">
+                <Boxes className="size-10 mx-auto text-muted-foreground/50 mb-2" />
+                <p className="font-semibold text-foreground">No Gadget Selected</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Please pick an available gadget from the left column to begin sales billing.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Quantity & Unit Price */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                      Quantity (Max: {availableQty}) <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={availableQty}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl border bg-background font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                      Selling Price / Unit (Min: {fmt(selectedGadget.minSellingPrice)}) <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={selectedGadget.minSellingPrice}
+                      value={sellingPrice}
+                      onChange={(e) => setSellingPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl border bg-background font-bold text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex items-center gap-1.5">
+                      <User className="size-3.5" /> Customer Name <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="e.g. Tanvir Hasan"
+                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex items-center gap-1.5">
+                      <Phone className="size-3.5" /> Customer Phone <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="017XXXXXXXX"
+                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Method & Warranty */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex items-center gap-1.5">
+                      <CreditCard className="size-3.5" /> Payment Method
+                    </label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="bKash">bKash</option>
+                      <option value="Nagad">Nagad</option>
+                      <option value="Card">Card</option>
+                      <option value="Bank">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex items-center gap-1.5">
+                      <ShieldCheck className="size-3.5" /> Warranty Days
+                    </label>
+                    <select
+                      value={warrantyDays}
+                      onChange={(e) => setWarrantyDays(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    >
+                      <option value={0}>No Warranty (0 Days)</option>
+                      <option value={7}>7 Days Replacement</option>
+                      <option value={10}>10 Days Replacement</option>
+                      <option value={30}>1 Month (30 Days)</option>
+                      <option value={90}>3 Months (90 Days)</option>
+                      <option value={180}>6 Months (180 Days)</option>
+                      <option value={365}>1 Year (365 Days)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                    Memo Notes / Remarks (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g. Serial # or special discount remark"
+                    className="w-full px-3 py-2 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+
+                {/* Total Billing Box & Submit Button */}
+                <div className="bg-muted/30 border rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Total Payable Amount
+                    </span>
+                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                      {fmt(totalPrice)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Printer className="size-4" />
+                    <span>{submitting ? "Processing..." : "Complete Sale & Print Memo"}</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Bottom Section: Recent Gadget Sales Ledger */}
+      <div className="bg-card border rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+              <FileText className="size-5 text-primary" />
+              Recent Gadget Sales
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              History of all customer purchases and printed cash memos
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-72">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={salesSearch}
+              onChange={(e) => {
+                setSalesSearch(e.target.value);
+                setSalesPage(1);
+              }}
+              placeholder="Search customer, invoice, product..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl border bg-muted/30 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+        </div>
+
+        {/* Sales Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[850px] text-sm">
+            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left">Invoice</th>
+                <th className="p-3 text-left">Product Name</th>
+                <th className="p-3 text-left">Customer</th>
+                <th className="p-3 text-left">Date</th>
+                <th className="p-3 text-center">Qty</th>
+                <th className="p-3 text-right">Unit Price</th>
+                <th className="p-3 text-right">Total</th>
+                <th className="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {paginatedSales.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-10 text-center text-sm text-muted-foreground">
+                    No gadget sales found.
+                  </td>
+                </tr>
+              ) : (
+                paginatedSales.map((sale) => (
+                  <tr key={sale.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="p-3 font-mono text-xs font-bold text-primary">
+                      {sale.invoiceNumber}
+                    </td>
+                    <td className="p-3 font-medium text-foreground">{sale.productName}</td>
+                    <td className="p-3">
+                      <div className="font-semibold text-foreground">{sale.customerName}</div>
+                      <div className="text-xs text-muted-foreground">{sale.customerPhone}</div>
+                    </td>
+                    <td className="p-3 text-xs text-muted-foreground">
+                      {new Date(sale.saleDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="p-3 text-center font-bold">{sale.quantity}</td>
+                    <td className="p-3 text-right">{fmt(sale.sellingPrice)}</td>
+                    <td className="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                      {fmt(sale.totalPrice)}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setViewMemoSale(sale)}
+                        className="px-2.5 py-1 rounded-lg border bg-background hover:bg-muted text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="View & Print Cash Memo"
+                      >
+                        <Printer className="size-3.5 text-primary" />
+                        <span>Print Memo</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {filteredSales.length > PAGE_SIZE && (
+          <div className="pt-2">
+            <AppPagination
+              currentPage={salesPage}
+              totalPages={Math.ceil(filteredSales.length / PAGE_SIZE)}
+              onPageChange={setSalesPage}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Customer Memo Modal */}
+      {viewMemoSale && (
+        <GadgetMemoModal
+          sale={viewMemoSale}
+          onClose={() => setViewMemoSale(null)}
         />
       )}
-
-      {editId && draft && (
-        <EditStockModal draft={draft} onChange={setDraft} onSave={saveEdit} onClose={cancelEdit} />
-      )}
-
-      {/* ── Add New Sale Wizard ─────────────────────── */}
-      {deleteTarget && (
-        <DeleteStockModal
-          item={deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={confirmDelete}
-        />
-      )}
-
-      {wizardOpen && (
-        <NewSaleWizard
-          step={step}
-          available={availablePhones}
-          wizardQ={wizardQ}
-          setWizardQ={setWizardQ}
-          pickedPhone={pickedPhone}
-          customerForm={customerForm}
-          setCustomer={setCustomer}
-          onPickPhone={startSale}
-          onBack={() => setStep("pick")}
-          onConfirm={confirmSale}
-          onClose={closeWizard}
-          successId={successId}
-          totalAvailable={availablePhones.length}
-          onPrintMemo={() => setShowSuccessMemo(true)}
-        />
-      )}
-
-      {showSuccessMemo && rows.find((r) => r.id === successId) && (
-        <CustomerMemoModal
-          sale={rows.find((r) => r.id === successId)!}
-          onClose={() => setShowSuccessMemo(false)}
-        />
-      )}
-
-      {memoSale && <CustomerMemoModal sale={memoSale} onClose={() => setMemoSale(null)} />}
-
-      <BarcodeScannerModal
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={handleBarcodeScanned}
-        title="Scan Phone Box Barcode / IMEI"
-      />
     </div>
   );
 }
-
-

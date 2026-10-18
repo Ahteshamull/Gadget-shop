@@ -7,12 +7,14 @@ import {
   Package,
   PackagePlus,
   Shield,
-  Smartphone,
+  Headphones,
   UserCog,
   Users,
   Sliders,
   Receipt,
   X,
+  ShoppingCart,
+  Boxes,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,15 +35,14 @@ import { InvoiceSettingsModal } from "./settings/InvoiceSettingsModal";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Add Stock", url: "/sales", icon: PackagePlus },
-  { title: "All Phone Stock", url: "/all-stocks", icon: Package },
+  { title: "Gadget Sales & POS", url: "/sales", icon: ShoppingCart },
+  { title: "Gadget Inventory", url: "/gadget", icon: Boxes },
 ];
 
 const manageItems = [
-  { title: "All Gadget Stock", url: "/gadget", icon: PackagePlus },
   { title: "Customers", url: "/customers", icon: Users },
-  { title: "Warranty", url: "/warranty", icon: Shield },
-  { title: "Partner", url: "/partner", icon: Handshake },
+  { title: "Warranty Tracking", url: "/warranty", icon: Shield },
+  { title: "Partner & Expenses", url: "/partner", icon: Handshake },
 ];
 
 const userItems = [
@@ -65,10 +66,10 @@ export function AppSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (p: string) => path === p || (p !== "/dashboard" && path.startsWith(p));
   const isPrivileged = role === "owner" || role === "admin";
-  const visibleMainItems = role === "staff" ? mainItems.filter((item) => item.url !== "/sales") : mainItems;
+  const visibleMainItems = mainItems;
   const visibleManageItems =
     role === "staff"
-      ? manageItems.filter((item) => item.url === "/gadget")
+      ? manageItems.filter((item) => item.url !== "/partner")
       : manageItems;
   const visibleUserItems = isPrivileged ? userItems : [];
 
@@ -130,16 +131,16 @@ export function AppSidebar() {
                 </div>
               ) : (
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-md shadow-cyan-950/20 group-data-[collapsible=icon]:size-8 overflow-hidden hover:scale-105 transition-transform duration-300">
-                  <Smartphone className="size-4 text-white" />
+                  <Headphones className="size-4 text-white" />
                 </div>
               )}
               {!collapsed && (
                 <div className="min-w-0">
                   <div className="truncate text-base font-bold tracking-wide text-sidebar-foreground">
-                    {shopName || "Phone Bazar"}
+                    {shopName || "Gadget Shop"}
                   </div>
                   <div className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700/70 dark:text-cyan-300/70">
-                    {shopTagline || "SALES CONSOLE"}
+                    {shopTagline || "SMART GADGETS & POS"}
                   </div>
                 </div>
               )}
@@ -159,9 +160,9 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent className="gap-1 px-2 py-3 group-data-[collapsible=icon]:px-1.5 flex-1 min-h-0 overflow-y-auto overscroll-contain">
-          {renderGroup("Manage Phones", visibleMainItems)}
-          {renderGroup("Manage Gadgets", visibleManageItems, true)}
-          {renderGroup("Manage User", visibleUserItems, true)}
+          {renderGroup("Main Menu", visibleMainItems)}
+          {renderGroup("Business & CRM", visibleManageItems, true)}
+          {renderGroup("Administration", visibleUserItems, true)}
 
           {/* Setup Profile and Image & Invoice / Memo Setup right under MANAGE USER */}
           {isPrivileged && (

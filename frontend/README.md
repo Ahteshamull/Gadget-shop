@@ -1,4 +1,4 @@
-# 📱 Phone Bazar POS & Inventory Management System — Frontend
+# 📱 Gadgets POS & Inventory Management System — Frontend
 
 A modern, high-performance Point of Sale (POS), Stock Management, and Business Ledger application designed specifically for retail mobile phone and gadget businesses. Built with **TanStack Start**, **React 19**, **TypeScript**, **Redux Toolkit**, and **Tailwind CSS v4**.
 
@@ -38,51 +38,62 @@ A modern, high-performance Point of Sale (POS), Stock Management, and Business L
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Framework** | [TanStack Start](https://tanstack.com/start) & [Vite](https://vitejs.dev/) |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) (Strict Mode) |
-| **UI Library** | [React 19](https://react.dev/) |
-| **State Management** | [Redux Toolkit](https://redux-toolkit.js.org/) |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) & [Radix UI](https://www.radix-ui.com/) primitives |
-| **Icons** | [Lucide React](https://lucide.dev/) |
-| **Charts & Graphs** | [Recharts](https://recharts.org/) |
-| **Notifications** | [Sonner](https://sonner.emilkowal.ski/) |
+| Layer                | Technology                                                                                     |
+| :------------------- | :--------------------------------------------------------------------------------------------- |
+| **Framework**        | [TanStack Start](https://tanstack.com/start) & [Vite](https://vitejs.dev/)                     |
+| **Language**         | [TypeScript](https://www.typescriptlang.org/) (Strict Mode)                                    |
+| **UI Library**       | [React 19](https://react.dev/)                                                                 |
+| **State Management** | [Redux Toolkit](https://redux-toolkit.js.org/)                                                 |
+| **Styling**          | [Tailwind CSS v4](https://tailwindcss.com/) & [Radix UI](https://www.radix-ui.com/) primitives |
+| **Icons**            | [Lucide React](https://lucide.dev/)                                                            |
+| **Charts & Graphs**  | [Recharts](https://recharts.org/)                                                              |
+| **Notifications**    | [Sonner](https://sonner.emilkowal.ski/)                                                        |
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 18.x or higher
 - npm, pnpm, or bun
 
 ### 1. Installation
+
 ```bash
 cd Phone-Bazar-Frontend
 npm install
 ```
 
 ### 2. Environment Configuration
+
 Create a `.env` file in the root directory (or copy `.env.example`):
+
 ```env
 # Backend API Base URL
 VITE_API_URL=http://localhost:5000/api
 ```
 
 ### 3. Running Locally
+
 Start the development server:
+
 ```bash
 npm run dev
 ```
+
 Open your browser and navigate to **`http://localhost:8080`** (or the port specified in terminal output).
 
 ### 4. Production Build & Preview
+
 To create an optimized production bundle:
+
 ```bash
 npm run build
 ```
+
 To preview the production build locally:
+
 ```bash
 npm run preview
 ```
@@ -136,4 +147,5 @@ Phone-Bazar-Frontend/
 ---
 
 ## 📄 License
+
 This project is proprietary and confidential. Unauthorized copying, distribution, or modification is strictly prohibited.

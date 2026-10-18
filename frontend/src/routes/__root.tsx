@@ -151,7 +151,7 @@ import { useRouterState, useNavigate } from "@tanstack/react-router";
 
 import { Toaster } from "../components/ui/sonner";
 
-const staffAllowedRoutes = new Set(["/dashboard", "/all-stocks", "/gadget"]);
+const staffAllowedRoutes = new Set(["/dashboard", "/sales", "/gadget", "/customers", "/warranty"]);
 
 function RootComponentWrapper() {
   return (
@@ -272,7 +272,6 @@ function RootComponent() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(fetchPhoneSales());
       dispatch(fetchGadgets());
       dispatch(fetchGadgetSales());
       dispatch(fetchBusinessProfile());
