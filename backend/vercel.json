@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.ts",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://phone-bazar-frontend.vercel.app",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Authorization, Accept",
+        "Access-Control-Allow-Credentials": "true"
+      }
+    }
+  ]
+}
